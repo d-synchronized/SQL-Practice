@@ -1,0 +1,103 @@
+drop schema if exists `inventory`; create schema `inventory`;
+
+use `inventory`;
+
+SET foreign_key_checks = 0;
+
+drop table if exists `address`;create table `address` (
+address_id bigint not null auto_increment primary key,
+house_number varchar(10) not null,
+house_name varchar(255) not null,
+street varchar(255) not null,
+city varchar(255) not null,
+pincode varchar(100) not null,
+created_at timestamp default CURRENT_TIMESTAMP,
+modified_at timestamp on update current_timestamp
+);
+
+drop table if exists `customer`;create table `customer`(
+customer_id bigint not null auto_increment primary key,
+first_name varchar(255) not null,
+last_name varchar(255)  not null,
+address_id bigint,
+phone_number varchar(20) not null,
+email varchar(50) default '',
+notes varchar(500),
+created_at timestamp default CURRENT_TIMESTAMP,
+modified_at timestamp on update current_timestamp,
+constraint customer_address_address_id_fk foreign key (address_id) references address(address_id) ON DELETE cascade on update cascade
+);
+
+drop table if exists `options`;create table `options`(
+options_id bigint not null auto_increment primary key,
+option_name varchar(255) not null,
+description varchar(255) not null,
+price double default 0.0,
+created_at timestamp default CURRENT_TIMESTAMP,
+modified_at timestamp on update current_timestamp
+);
+
+drop table if exists `vehicle`;create table `vehicle`(
+vehicle_id bigint not null auto_increment primary key,
+vin char(20) not null unique,
+brand varchar(255) not null,
+model varchar(255) not null,
+price double not null,
+manufacturing_year char(4),
+new_or_old enum('NEW' , 'USED') default 'NEW',
+created_at timestamp default CURRENT_TIMESTAMP,
+modified_at timestamp on update current_timestamp
+);
+
+drop table if exists `vehicle_options`;create table `vehicle_options` (
+vehicle_options bigint not null auto_increment primary key,
+vehicle_id bigint not null,
+options_id bigint not null,
+is_complimentary boolean default 0,
+created_at timestamp default CURRENT_TIMESTAMP,
+modified_at timestamp on update current_timestamp,
+constraint vehicle_options_options_options_id_FK foreign key (options_id) references options(options_id)  on update cascade on delete cascade,
+constraint vehicle_options_vechicle_vehicle_id_FK foreign key (vehicle_id) references vehicle(vehicle_id)  on update cascade on delete cascade,
+unique key  vehicle_options_vehicle_id_IDK (vehicle_id, options_id)
+);
+
+drop table if exists `sales_person`;create table `sales_person`(
+sales_person_id bigint not null auto_increment,
+first_name varchar(255)  not null,
+last_name varchar(255) not null,
+address_id bigint,
+phone_number varchar(20) not null,
+email varchar(50) not null,
+created_at timestamp default CURRENT_TIMESTAMP,
+modified_at timestamp on update current_timestamp,
+primary key (sales_person_id),
+constraint sales_person_address_address_id_fk foreign key (address_id) references address(address_id) ON DELETE cascade on update cascade
+);
+
+drop table if exists `customer_visit`;create table `customer_visit`(
+customer_visit_id bigint not null auto_increment primary key,
+customer_id bigint not null,
+sales_person_id bigint not null,
+visit_date datetime not null,
+took_testdrive boolean default false,
+notes varchar(500) not null,
+created_at timestamp default CURRENT_TIMESTAMP,
+modified_at timestamp on update current_timestamp,
+constraint customer_visit_sales_person_sales_person_id_fk foreign key (sales_person_id) references sales_person(sales_person_id) ON DELETE NO ACTION on update cascade,
+constraint customer_visit_customer_customer_id_fk foreign key (customer_id) references customer(customer_id) ON DELETE cascade on update cascade
+);
+
+
+drop table if exists `deal`;create table `deal`(
+deal_id bigint not null auto_increment primary key,
+customer_id bigint not null,
+vehicle_id bigint not null,
+sales_person_id bigint not null,
+created_at timestamp default CURRENT_TIMESTAMP,
+modified_at timestamp on update current_timestamp,
+constraint deal_customer_customer_id_fk foreign key (customer_id) references customer(customer_id) ON DELETE cascade on update cascade,
+constraint deal_vehicle_vehicle_id_fk foreign key (vehicle_id) references vehicle(vehicle_id) ON DELETE cascade on update cascade,
+constraint deal_sales_person_sales_person_id_fk foreign key (sales_person_id) references sales_person(sales_person_id) ON DELETE cascade on update cascade
+);
+
+SET foreign_key_checks = 1;
