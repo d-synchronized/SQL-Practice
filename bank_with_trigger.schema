@@ -1,0 +1,62 @@
+drop schema if exists `bank`; create schema `bank`;
+use `bank`;
+
+create table branch(branch_name varchar(200) unique not null, branch_city varchar(255), assets varchar(255));
+create table customer(customer_name varchar(200), customer_street varchar(200), customer_city varchar(200));
+create table loan(loan_number varchar(200), branch_name varchar(200), amount varchar(200));
+create table borrower(customer_name varchar(200), loan_number varchar(200));
+create table account(account_number varchar(200), branch_name varchar(200), balance varchar(200));
+create table depositor(customer_name varchar(200), account_number varchar(200));
+drop table if exists audit;create table audit(audit_id bigint auto_increment primary key,
+column_name varchar(255),
+operation varchar(255),
+old_value varchar(255),
+new_value varchar(255),
+created_at timestamp default CURRENT_TIMESTAMP,
+modified_at timestamp on update current_timestamp
+);
+
+delimiter $$
+drop trigger if exists `bank`.`after_delete_branch`;create trigger `bank`.`after_delete_branch`
+after delete on `bank`.`branch` for each row
+begin
+  insert into `bank`.`audit`(operation , column_name , old_value,new_value) 
+   values
+   ('DELETE' ,'branch_name' , OLD.branch_name , ''),
+   ('DELETE' ,'branch_city' , OLD.branch_city , ''),
+   ('DELETE' ,'assets' , OLD.assets , ''); 
+end
+$$ delimiter ;
+
+delimiter $$
+drop trigger if exists `bank`.`before_insertion_branch`;create trigger `bank`.`before_insertion_branch` 
+before insert on `bank`.`branch` 
+for each row 
+begin
+   insert into `bank`.`audit`(operation , column_name , old_value,new_value) 
+   values
+   ('INSERT' ,'branch_name' , '' , NEW.branch_name),
+   ('INSERT' ,'branch_city' , '' , NEW.branch_city),
+   ('INSERT' ,'assets' , '' , NEW.assets);   
+end
+$$ delimiter ;
+
+delimiter $$
+drop trigger if exists `bank`.`after_update_branch`;create trigger `bank`.`after_update_branch`
+after update on `bank`.`branch`
+for each row
+begin 
+   insert into `bank`.`audit`(operation , column_name , old_value,new_value) 
+   values
+   ('UPDATE' ,'branch_name' , OLD.branch_name , NEW.branch_name),
+   ('UPDATE' ,'branch_city' , OLD.branch_city , NEW.branch_city),
+   ('UPDATE' ,'assets' , OLD.assets , NEW.assets);   
+end
+$$ delimiter ;
+
+INSERT INTO `bank`.`branch` (`branch_name`, `branch_city`, `assets`) VALUES ('ICICI', 'Delhi', 'Something');
+INSERT INTO `bank`.`branch` (`branch_name`, `branch_city`, `assets`) VALUES ('HDFC', 'Noida', 'Something');
+update `bank`.`branch` set assets = 'Something new' where branch_name in ('ICICI' , 'HDFC');
+delete from `bank`.branch where branch_name in ('ICICI' , 'HDFC');
+
+select * from `bank`.audit
